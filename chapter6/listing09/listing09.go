@@ -6,14 +6,16 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+	//"sync/atomic"
 )
 
 var (
 	// counter is a variable incremented by all goroutines.
-	counter int
+	counter int64
 
 	// wg is used to wait for the program to finish.
 	wg sync.WaitGroup
+	mutex sync.Mutex
 )
 
 // main is the entry point for all Go programs.
@@ -33,19 +35,24 @@ func main() {
 // incCounter increments the package level counter variable.
 func incCounter(id int) {
 	// Schedule the call to Done to tell main we are done.
-	defer wg.Done()
+	defer wg.Done()	
 
 	for count := 0; count < 2; count++ {
 		// Capture the value of Counter.
-		value := counter
+		mutex.Lock()
+		{
+			value := counter
 
-		// Yield the thread and be placed back in queue.
+
+
+			// Increment our local value of Counter.
+			value++
+			// Store the value back into Counter.
+			counter = value
+
+			// Yield the thread and be placed back in queue.
+		}
+        mutex.Unlock()
 		runtime.Gosched()
-
-		// Increment our local value of Counter.
-		value++
-
-		// Store the value back into Counter.
-		counter = value
 	}
 }
